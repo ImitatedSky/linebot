@@ -1,3 +1,5 @@
+# google cloud function: linebot-default
+
 import base64
 import hashlib
 import hmac
@@ -7,8 +9,6 @@ import os
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import TextSendMessage
-
-from msg_manager import msg_analysis
 
 line_bot_api = LineBotApi(os.environ.get("CHANNEL_ACCESS_TOKEN"))
 channel_secret = os.environ.get("CHANNEL_SECRET")
@@ -45,16 +45,13 @@ def linebot(request):
                     ]  # 取得 reply token
                     msg = json_data["events"][0]["message"]["text"]  # 取得 訊息
 
-                    # line_bot_api.reply_message(
-                    #     reply_token,
-                    #     TextSendMessage(text=body)
-                    # )
-                    u = user_profile(json_data["events"][0])
                     line_bot_api.reply_message(
-                        reply_token, TextSendMessage(text=u.display_name)
+                        reply_token,
+                        TextSendMessage(
+                            text=body
+                            )
                     )
 
-                    # print(msg, reply_token)
                     return "OK", 200
                 except InvalidSignatureError as e:
                     print(e)
@@ -63,15 +60,3 @@ def linebot(request):
     else:
         return "Method not allowed", 400
 
-
-def user_profile(event):
-    try:
-        profile = line_bot_api.get_profile(event["source"]["userId"])
-        print(
-            f"Display name: {profile.display_name}, User ID: {profile.user_id}"
-        )
-
-    except LineBotApiError as e:
-        print(f"get_profile error: {e}")
-        # error handle
-    return profile
