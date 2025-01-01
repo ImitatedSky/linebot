@@ -1,0 +1,4 @@
+line-bot-sdk==2.3.0
+google-cloud-firestore==2.19.0
+
+pre-commit == 4.0.1
