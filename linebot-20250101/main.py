@@ -8,8 +8,6 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import TextSendMessage
 
-from msg_manager import msg_analysis
-
 line_bot_api = LineBotApi(os.environ.get("CHANNEL_ACCESS_TOKEN"))
 channel_secret = os.environ.get("CHANNEL_SECRET")
 handler = WebhookHandler(os.environ.get("CHANNEL_SECRET"))

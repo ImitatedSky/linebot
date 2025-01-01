@@ -7,7 +7,7 @@ import json
 import os
 
 from linebot import LineBotApi, WebhookHandler
-from linebot.exceptions import InvalidSignatureError, LineBotApiError
+from linebot.exceptions import InvalidSignatureError
 from linebot.models import TextSendMessage
 
 line_bot_api = LineBotApi(os.environ.get("CHANNEL_ACCESS_TOKEN"))
@@ -46,10 +46,7 @@ def linebot(request):
                     msg = json_data["events"][0]["message"]["text"]  # 取得 訊息
 
                     line_bot_api.reply_message(
-                        reply_token,
-                        TextSendMessage(
-                            text=body
-                            )
+                        reply_token, TextSendMessage(text=body)
                     )
 
                     return "OK", 200
@@ -59,4 +56,3 @@ def linebot(request):
                 return "Invalid signature", 403
     else:
         return "Method not allowed", 400
-
