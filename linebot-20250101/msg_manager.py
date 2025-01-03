@@ -1,6 +1,11 @@
 import json
+from datetime import datetime
+
+from firebase_manager import FirestoreDB
 
 from linebot.exceptions import InvalidSignatureError
+
+# is use from main import line_bot_api, handler
 
 dummy_data = {
     "destination": "U1234567890abcdef",
@@ -35,6 +40,38 @@ dummy_data = {
 }
 
 
+def msg_processing(body):
+    """
+    return reply_token, msg
+    """
+    try:
+        # analysis body
+        (
+            reply_token,
+            msg,
+            is_mention,
+            user_id,  # 誰傳的
+            group_id,
+            _today,
+        ) = msg_analysis(body)
+
+        if is_mention:
+            mentionees = get_mentionees(is_mention)
+
+            for mentionee in mentionees:
+                if mentionee["isSelf"]:
+                    # 對機器人@
+                    pass
+                else:
+                    # 對其他人@
+                    target = mentionee["userId"]
+                    analysis_msg(target, msg)
+
+        return "OK", 200
+    except InvalidSignatureError:
+        return
+
+
 def msg_analysis(body):
     """
     retrun reply_token, msg, is_mention, user_id, gruop_id
@@ -49,8 +86,10 @@ def msg_analysis(body):
         user_id = json_data["events"][0]["source"]["userId"]
         gruop_id = json_data["events"][0]["source"]["groupId"]
 
-        return reply_token, msg, is_mention, user_id, gruop_id
-    except InvalidSignatureError as e:
+        _today = datetime.today().strftime("%Y-%m-%d")  # 今天日期 yyyy-mm-dd
+
+        return reply_token, msg, is_mention, user_id, gruop_id, _today
+    except InvalidSignatureError:
         return
 
 
@@ -61,7 +100,31 @@ def get_mentionees(is_mention):
         return None
 
 
-rt, msg, is_mention, user_id, group_id = msg_analysis(json.dumps(dummy_data))
+def analysis_msg(target, msg):
+    # 開始讀取訊息
+    # 取得@後的訊息
+    # dummy_text = "@dummyUser message"
+    pass
+
+
+def fetch_data(collection_name, doc_id):
+    db = FirestoreDB(collection_name)
+    # 讀取數據
+    # db.read_document("2025-01-01-gid")
+    return db.read_document(doc_id)
+
+
+def create_doc(collection_name, doc_id, data):
+    db = FirestoreDB(collection_name)
+
+    # 寫入數據
+    # db.write_document("2025-01-01", {"myname": {"count": 55, "finish": 45}, "myfriend": {"count": 99, "finish": 99}})
+    db.write_document(doc_id, data)
+
+
+rt, msg, is_mention, user_id, group_id, _today = msg_analysis(
+    json.dumps(dummy_data)
+)
 
 
 print(rt)

@@ -4,6 +4,8 @@ import hmac
 import json
 import os
 
+from msg_manager import msg_processing
+
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import TextSendMessage
@@ -54,6 +56,7 @@ def linebot(request):
 
                     # print(msg, reply_token)
                     return "OK", 200
+                    return msg_processing(body)
                 except InvalidSignatureError as e:
                     print(e)
             else:
