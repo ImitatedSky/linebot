@@ -72,6 +72,12 @@ def msg_processing(body):
                 if mentionee["isSelf"]:
                     # 對機器人@
                     pass
+                elif msg.startswith("@All"):
+                    # 對全體@
+                    new_msg = msg.split()[1]
+                    if new_msg.startswith("+"):
+                        num = int(new_msg[1:])
+                        update_all_counts(group_id, num)
                 else:
                     # 對其他人@
                     target = mentionee["userId"]
@@ -79,9 +85,6 @@ def msg_processing(body):
                     if new_msg.startswith("+"):
                         num = int(new_msg[1:])
                         update_count(target, group_id, num)
-                    elif new_msg.startswith("@All"):
-                        num = int(new_msg[1:])
-                        update_all_counts(group_id, num)
                     elif new_msg.startswith("-"):
                         num = int(new_msg[1:])
                         update_finish(target, group_id, num)
