@@ -1,6 +1,23 @@
+# 
 .env
-.vscode
-node_modules
 
-.venv
+# 
+.vscode/
+
+# 
+node_modules/
+
+# 
+.venv/
+
+# 
 test.py
+
+# 
+*.log
+
+# 
+*.pyc
+
+#
+__pycache__/

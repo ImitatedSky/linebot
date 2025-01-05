@@ -7,9 +7,10 @@ import os
 from msg_manager import msg_processing
 
 from linebot import LineBotApi, WebhookHandler
-from linebot.exceptions import InvalidSignatureError, LineBotApiError
+from linebot.exceptions import InvalidSignatureError
 from linebot.models import TextSendMessage
 
+# 初始化 Line Bot API 和 Webhook Handler
 line_bot_api = LineBotApi(os.environ.get("CHANNEL_ACCESS_TOKEN"))
 channel_secret = os.environ.get("CHANNEL_SECRET")
 handler = WebhookHandler(os.environ.get("CHANNEL_SECRET"))
@@ -38,41 +39,24 @@ def linebot(request):
             # Compare x-line-signature request header and the signature
             if x_line_signature == signature:
                 try:
-                    json_data = json.loads(body)
+                    json.loads(body)
                     handler.handle(body, x_line_signature)
-                    reply_token = json_data["events"][0][
-                        "replyToken"
-                    ]  # 取得 reply token
-                    msg = json_data["events"][0]["message"]["text"]  # 取得 訊息
 
-                    # line_bot_api.reply_message(
-                    #     reply_token,
-                    #     TextSendMessage(text=body)
-                    # )
-                    u = user_profile(json_data["events"][0])
-                    line_bot_api.reply_message(
-                        reply_token, TextSendMessage(text=u.display_name)
-                    )
+                    # 處理訊息並獲取 reply_token 和 msg
+                    result = msg_processing(body)
+                    if result:
+                        reply_token, msg = result
 
-                    # print(msg, reply_token)
+                        # 發送回應訊息
+                        line_bot_api.reply_message(
+                            reply_token, TextSendMessage(text=msg)
+                        )
+
                     return "OK", 200
-                    return msg_processing(body)
                 except InvalidSignatureError as e:
                     print(e)
+                    return "Invalid signature", 403
             else:
                 return "Invalid signature", 403
     else:
         return "Method not allowed", 400
-
-
-def user_profile(event):
-    try:
-        profile = line_bot_api.get_profile(event["source"]["userId"])
-        print(
-            f"Display name: {profile.display_name}, User ID: {profile.user_id}"
-        )
-
-    except LineBotApiError as e:
-        print(f"get_profile error: {e}")
-        # error handle
-    return profile
