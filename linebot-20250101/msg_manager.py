@@ -42,6 +42,8 @@ dummy_data = {
     ],
 }
 
+today_type = ["Today", "today", "TOday", "TODay", "TODAy", "TODAY", "今天", "今日"]
+
 
 def msg_processing(body):
     """
@@ -73,15 +75,23 @@ def msg_processing(body):
                 else:
                     # 對其他人@
                     target = mentionee["userId"]
-                    if msg.startswith("+"):
-                        num = int(msg.split()[1])
+                    new_msg = msg.split()[1]
+                    if new_msg.startswith("+"):
+                        num = int(new_msg[1:])
                         update_count(target, group_id, num)
-                    if msg.startswith("@all"):
-                        num = int(msg.split()[1])
+                    elif new_msg.startswith("@All"):
+                        num = int(new_msg[1:])
                         update_all_counts(group_id, num)
-                    if msg.startswith("-"):
-                        num = int(msg.split()[1])
+                    elif new_msg.startswith("-"):
+                        num = int(new_msg[1:])
                         update_finish(target, group_id, num)
+                    else:
+                        return reply_token, f"已處理訊息: {new_msg}"
+
+        # 如果startwith是今天
+        if msg.startswith(tuple(today_type)):
+            data = get_today_count(group_id)
+            return reply_token, f"今日統計: {data}"
 
         # 去除空白
         msg = msg.strip()
@@ -166,11 +176,11 @@ def create_or_update_group_data(group_id, user_id):
     if data:
         user_name = get_user_profile(user_id, group_id).display_name
         if user_name not in data:
-            data[user_name] = {"count": 0, "finish": 0}
+            data[user_id] = {"name": user_name}
             group_db.update_document(group_id, data)
     else:
         user_name = get_user_profile(user_id, group_id).display_name
-        data = {user_name: {"count": 0, "finish": 0}}
+        data = {user_id: {"name": user_name}}
         create_doc("group", group_id, data)
 
 
@@ -212,21 +222,17 @@ def update_all_counts(group_id, num):
     _today = datetime.today().strftime("%Y-%m-%d")
     doc_id = f"{_today}-{group_id}"
     data = fetch_data("count", doc_id)
-    if data:
-        for user_name, values in data.items():
-            number = values.get("count", 0)
-            finish = values.get("finish", 0)
-            data[user_name] = {"count": number + num, "finish": finish}
-    else:
-        # 如果沒有數據，初始化所有成員數據
-        group_data = fetch_data("group", group_id)
-        if group_data:
-            data = {
-                user_name: {"count": num, "finish": 0}
-                for user_name in group_data
-            }
-        else:
-            data = {}
+
+    group_data = get_all_group_members(group_id)
+
+    if not data:
+        data = {}
+
+    for user_id, user_info in group_data.items():
+        user_name = user_info["name"]
+        count = data.get(user_name, {}).get("count", 0)
+        finish = data.get(user_name, {}).get("finish", 0)
+        data[user_name] = {"count": count + num, "finish": finish}
 
     update_doc("count", doc_id, data)
 
@@ -250,4 +256,12 @@ def get_today_count(group_id):
     _today = datetime.today().strftime("%Y-%m-%d")
     doc_id = f"{_today}-{group_id}"
     data = fetch_data("count", doc_id)
-    return data
+
+    # 更好觀看的格式
+    if data:
+        result = ""
+        for user, info in data.items():
+            result += f"{user}: {info}\n"
+        return result
+    else:
+        return "今日尚無任何紀錄"
