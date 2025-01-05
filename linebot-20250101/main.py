@@ -1,7 +1,6 @@
 import base64
 import hashlib
 import hmac
-import json
 import os
 
 from msg_manager import msg_processing
@@ -39,7 +38,6 @@ def linebot(request):
             # Compare x-line-signature request header and the signature
             if x_line_signature == signature:
                 try:
-                    json.loads(body)
                     handler.handle(body, x_line_signature)
 
                     # 處理訊息並獲取 reply_token 和 msg
