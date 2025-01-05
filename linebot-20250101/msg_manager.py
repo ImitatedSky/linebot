@@ -60,6 +60,8 @@ def msg_processing(body):
             _today,
         ) = msg_analysis(body)
 
+        print(f"Time: {datetime.now()}, body: {body}")
+
         if msg.startswith("#add"):
             # 加入群組
             create_or_update_group_data(group_id, user_id)
@@ -72,13 +74,15 @@ def msg_processing(body):
                 if mentionee["isSelf"]:
                     # 對機器人@
                     pass
-                elif msg.startswith("@All"):
+                elif mentionee["type"] == "all":
+                    print(f"@all: {msg}")
                     # 對全體@
                     new_msg = msg.split()[1]
                     if new_msg.startswith("+"):
+                        print(f"log: update_all_counts")
                         num = int(new_msg[1:])
                         update_all_counts(group_id, num)
-                else:
+                elif mentionee["type"] == "user":
                     # 對其他人@
                     target = mentionee["userId"]
                     new_msg = msg.split()[1]
@@ -94,7 +98,7 @@ def msg_processing(body):
         # 如果startwith是今天
         if msg.startswith(tuple(today_type)):
             data = get_today_count(group_id)
-            return reply_token, f"今日統計: {data}"
+            return reply_token, f"今日統計:\n {data}"
 
         # 去除空白
         msg = msg.strip()
@@ -222,6 +226,7 @@ def update_finish(user_id, group_id, num):
 
 
 def update_all_counts(group_id, num):
+    print(f"log: update_all_counts function")
     _today = datetime.today().strftime("%Y-%m-%d")
     doc_id = f"{_today}-{group_id}"
     data = fetch_data("count", doc_id)
@@ -236,8 +241,9 @@ def update_all_counts(group_id, num):
         count = data.get(user_name, {}).get("count", 0)
         finish = data.get(user_name, {}).get("finish", 0)
         data[user_name] = {"count": count + num, "finish": finish}
-
+    print(f"log: update_all_counts data: {data}")
     update_doc("count", doc_id, data)
+    print(f"log: update_all_counts done")
 
 
 def get_all_group_members(group_id):
