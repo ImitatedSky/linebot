@@ -321,6 +321,7 @@ def get_total_count(group_id):
     group_db = FirestoreDB(f"group/{group_id}/groupmember")
     data = group_db.read_collection()
 
+    result = "總計統計:\n"
     result += "使用者名稱       總計數       完成數\n"
     result += "-----------------------------------\n"
     for userid, info in data.items():
