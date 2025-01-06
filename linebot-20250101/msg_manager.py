@@ -47,6 +47,7 @@ dummy_data = {
 today_type = ["Today", "today", "TOday", "TODay", "TODAy", "TODAY", "今天", "今日"]
 total_type = ["Total", "total", "TOtal", "TOTal", "TOTA", "TOTAL", "全部", "總計"]
 
+
 def msg_processing(body):
     """
     回傳 reply_token, msg
@@ -71,7 +72,7 @@ def msg_processing(body):
                 reply_token,
                 f"已加入群組,\n members:\n {get_all_group_members(group_id)}",
             )
-        
+
         _today = datetime.now(timezone).strftime("%Y-%m-%d")
         # 如果有 @mention
         if is_mention:
@@ -83,7 +84,7 @@ def msg_processing(body):
                 elif mentionee["type"] == "all":
                     print(f"@all: {msg}")
                     # 對全體@
-                    if len(msg.split()) > 1: # 檢查 msg.split() 的長度
+                    if len(msg.split()) > 1:  # 檢查 msg.split() 的長度
                         new_msg = msg.split()[1]
                         if new_msg.startswith("+"):
                             print(f"log: update_all_counts")
@@ -189,6 +190,7 @@ def update_doc(collection_name, doc_id, data):
     # 更新數據
     db.update_document(doc_id, data)
 
+
 def create_or_update_group_data(group_id, user_id):
     group_db = FirestoreDB("group")
     group_data = group_db.read_document(group_id)
@@ -201,13 +203,15 @@ def create_or_update_group_data(group_id, user_id):
         create_doc("group", group_id, group_data)
 
     # 確保 groupmember collection 存在
-    groupmember_data = group_db.read_document(f"{group_id}/groupmember/{user_id}")
+    groupmember_data = group_db.read_document(
+        f"{group_id}/groupmember/{user_id}"
+    )
     if not groupmember_data:
         # 如果成員 document 不存在，創建它
         groupmember_data = {
             "name": user_name,
             "total_counts": 0,
-            "finish_counts": 0
+            "finish_counts": 0,
         }
         create_doc(f"group/{group_id}/groupmember", user_id, groupmember_data)
 
@@ -219,10 +223,10 @@ def update_count(user_id, group_id, num):
     user_name = get_user_profile(user_id, group_id).display_name
 
     groupmember_data = fetch_data(f"group/{group_id}/groupmember", user_id)
-    
+
     if not data:
         data = {}
-    
+
     if doc_id in data:
         if user_name in data[doc_id]:
             data[doc_id][user_name]["count"] += num
@@ -230,11 +234,12 @@ def update_count(user_id, group_id, num):
             data[doc_id][user_name] = {"count": num, "finish": 0}
     else:
         data[doc_id] = {user_name: {"count": num, "finish": 0}}
-    
+
     groupmember_data["total_counts"] += num
-    
+
     update_doc(f"group/{group_id}/groupmember", user_id, groupmember_data)
     update_doc("group", f"{group_id}", data)
+
 
 def update_finish(user_id, group_id, num):
     _today = datetime.now(timezone).strftime("%Y-%m-%d")
@@ -243,10 +248,10 @@ def update_finish(user_id, group_id, num):
     user_name = get_user_profile(user_id, group_id).display_name
 
     groupmember_data = fetch_data(f"group/{group_id}/groupmember", user_id)
-    
+
     if not data:
         data = {}
-    
+
     if doc_id in data:
         if user_name in data[doc_id]:
             data[doc_id][user_name]["finish"] += num
@@ -254,11 +259,12 @@ def update_finish(user_id, group_id, num):
             data[doc_id][user_name] = {"count": 0, "finish": num}
     else:
         data[doc_id] = {user_name: {"count": 0, "finish": num}}
-    
+
     groupmember_data["finish_counts"] += num
-    
+
     update_doc(f"group/{group_id}/groupmember", user_id, groupmember_data)
     update_doc("group", f"{group_id}", data)
+
 
 def update_all_counts(group_id, num):
     print(f"log: update_all_counts function")
@@ -274,7 +280,7 @@ def update_all_counts(group_id, num):
     for user_id, user_info in group_data.items():
         user_name = user_info["name"]
         groupmember_data = user_info
-        
+
         if doc_id in data:
             if user_name in data[doc_id]:
                 data[doc_id][user_name]["count"] += num
@@ -288,6 +294,7 @@ def update_all_counts(group_id, num):
         update_doc(f"group/{group_id}/groupmember", user_id, groupmember_data)
     update_doc("group", f"{group_id}", data)
 
+
 def get_all_group_members(group_id):
     """
     return dict
@@ -296,6 +303,7 @@ def get_all_group_members(group_id):
     group_db = FirestoreDB(f"group/{group_id}/groupmember")
 
     return group_db.read_collection()
+
 
 def get_today_count(group_id):
     _today = datetime.now(timezone).strftime("%Y-%m-%d")
@@ -310,12 +318,12 @@ def get_today_count(group_id):
     else:
         return "今日尚無任何紀錄"
 
+
 def get_total_count(group_id):
     group_db = FirestoreDB(f"group/{group_id}/groupmember")
     data = group_db.read_collection()
-    
+
     result = ""
     for userid, info in data.items():
         result += f"{userid}: {info}\n"
     return result
-        

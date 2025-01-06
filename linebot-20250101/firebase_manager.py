@@ -64,7 +64,7 @@ class FirestoreDB:
                 f"Document {doc_id} does not exist in {self.collection_name} collection."
             )
         return doc.to_dict()
-    
+
     def read_collection(self):
         """
         read all document in collection
