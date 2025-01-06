@@ -28,7 +28,7 @@ dummy_data = {
                             "length": 9,
                             "userId": "Uabcdef123456",
                             "type": "user",
-                            "isSelf": False,
+                            "isSelf": False,  # @all 時沒有這個屬性
                         }
                     ]
                 },
@@ -78,18 +78,12 @@ def msg_processing(body):
         if is_mention:
             mentionees = get_mentionees(is_mention)
             for mentionee in mentionees:
-                if mentionee["isSelf"]:
-                    # 對機器人@
-                    pass
-                elif mentionee["type"] == "all":
-                    print(f"@all: {msg}")
+                if mentionee["type"] == "all":
                     # 對全體@
-                    if len(msg.split()) > 1:  # 檢查 msg.split() 的長度
-                        new_msg = msg.split()[1]
-                        if new_msg.startswith("+"):
-                            print(f"log: update_all_counts")
-                            num = int(new_msg[1:])
-                            update_all_counts(group_id, num)
+                    new_msg = msg.split()[1]
+                    if new_msg.startswith("+"):
+                        num = int(new_msg[1:])
+                        update_all_counts(group_id, num)
                 elif mentionee["type"] == "user":
                     # 對其他人@
                     target = mentionee["userId"]
@@ -105,6 +99,9 @@ def msg_processing(body):
                             reply_token,
                             f"今日統計({_today}):\n {get_today_count(group_id)}",
                         )
+                elif mentionee["isSelf"]:
+                    # 對機器人@
+                    pass
 
         # 如果startwith是今天
         if msg.startswith(tuple(today_type)):
