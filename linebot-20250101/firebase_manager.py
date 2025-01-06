@@ -64,6 +64,17 @@ class FirestoreDB:
                 f"Document {doc_id} does not exist in {self.collection_name} collection."
             )
         return doc.to_dict()
+    
+    def read_collection(self):
+        """
+        read all document in collection
+        return dict
+        """
+        docs = self.collection_ref.stream()
+        result = {}
+        for doc in docs:
+            result[doc.id] = doc.to_dict()
+        return result
 
     def update_document(self, doc_id, updates):
         """
