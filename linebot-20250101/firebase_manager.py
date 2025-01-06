@@ -44,9 +44,9 @@ class FirestoreDB:
         """
         doc_ref = self.collection_ref.document(doc_id)
         doc_ref.set(data, merge=True)
-        print(
-            f"Document {doc_id} successfully written in {self.collection_name} collection!"
-        )
+        # print(
+        #     f"Document {doc_id} successfully written in {self.collection_name} collection!"
+        # )
         return doc_ref
 
     def read_document(self, doc_id):
@@ -57,12 +57,13 @@ class FirestoreDB:
         doc_ref = self.collection_ref.document(doc_id)
         doc = doc_ref.get()
         # type(doc) => <class 'google.cloud.firestore_v1.document.DocumentSnapshot'>
-        if doc.exists:
-            print(f"{doc.id} => {doc.to_dict()}")
-        else:
-            print(
-                f"Document {doc_id} does not exist in {self.collection_name} collection."
-            )
+
+        # if doc.exists:
+        #     print(f"{doc.id} => {doc.to_dict()}")
+        # else:
+        #     print(
+        #         f"Document {doc_id} does not exist in {self.collection_name} collection."
+        #     )
         return doc.to_dict()
 
     def read_collection(self):
@@ -83,9 +84,9 @@ class FirestoreDB:
         """
         doc_ref = self.collection_ref.document(doc_id)
         doc_ref.update(updates)
-        print(
-            f"Document {doc_id} successfully updated in {self.collection_name} collection!"
-        )
+        # print(
+        #     f"Document {doc_id} successfully updated in {self.collection_name} collection!"
+        # )
         return doc_ref
 
     def delete_document(self, doc_id):
@@ -95,9 +96,9 @@ class FirestoreDB:
         """
         doc_ref = self.collection_ref.document(doc_id)
         doc_ref.delete()
-        print(
-            f"Document {doc_id} successfully deleted from {self.collection_name} collection!"
-        )
+        # print(
+        #     f"Document {doc_id} successfully deleted from {self.collection_name} collection!"
+        # )
         return doc_ref
 
     def search_document(self, doc_id):
@@ -107,12 +108,12 @@ class FirestoreDB:
         """
         doc_ref = self.collection_ref.document(doc_id)
         doc = doc_ref.get()
-        if doc.exists:
-            print(f"{doc.id} => {doc.to_dict()}")
-        else:
-            print(
-                f"Document {doc_id} does not exist in {self.collection_name} collection."
-            )
+        # if doc.exists:
+        #     print(f"{doc.id} => {doc.to_dict()}")
+        # else:
+        #     print(
+        #         f"Document {doc_id} does not exist in {self.collection_name} collection."
+        #     )
         return doc.to_dict()
 
     def search_by_name(self, name):
