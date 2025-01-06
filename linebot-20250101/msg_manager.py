@@ -2,11 +2,13 @@ import json
 import os
 from datetime import datetime
 
+import pytz
 from firebase_manager import FirestoreDB
 
 from linebot import LineBotApi
 from linebot.exceptions import InvalidSignatureError
 
+timezone = pytz.timezone("Asia/Taipei")
 # 使用 main.py 中的 line_bot_api 和 handler
 line_bot_api = LineBotApi(os.getenv("CHANNEL_ACCESS_TOKEN"))
 
@@ -60,12 +62,15 @@ def msg_processing(body):
             _today,
         ) = msg_analysis(body)
 
-        print(f"Time: {datetime.now()}, body: {body}")
+        # print(f"Time: {datetime.now()}, body: {body}")
 
         if msg.startswith("#add"):
             # 加入群組
             create_or_update_group_data(group_id, user_id)
-            return reply_token, "已更新群組資料."
+            return (
+                reply_token,
+                f"已加入群組,\n members:\n {get_all_group_members(group_id)}",
+            )
 
         # 如果有 @mention
         if is_mention:
@@ -93,7 +98,10 @@ def msg_processing(body):
                         num = int(new_msg[1:])
                         update_finish(target, group_id, num)
                     else:
-                        return reply_token, f"已處理訊息: {new_msg}"
+                        return (
+                            reply_token,
+                            f"今日統計:\n {get_today_count(group_id)}",
+                        )
 
         # 如果startwith是今天
         if msg.startswith(tuple(today_type)):
@@ -111,7 +119,7 @@ def msg_processing(body):
             num = int(msg[1:])
             update_finish(user_id, group_id, num)
 
-        return reply_token, f"已處理訊息: {msg}"
+        return reply_token, f"今日統計:\n {get_today_count(group_id)}"
     except InvalidSignatureError:
         return None
 
@@ -130,7 +138,8 @@ def msg_analysis(body):
         user_id = json_data["events"][0]["source"]["userId"]
         group_id = json_data["events"][0]["source"]["groupId"]
 
-        _today = datetime.today().strftime("%Y-%m-%d")  # 今天日期 yyyy-mm-dd
+        # _today = datetime.today().strftime("%Y-%m-%d")  # 今天日期 yyyy-mm-dd
+        _today = datetime.now(timezone).strftime("%Y-%m-%d")  # 今天日期 yyyy-mm-dd
 
         return reply_token, msg, is_mention, user_id, group_id, _today
     except InvalidSignatureError:
@@ -143,7 +152,7 @@ def get_user_profile(user_id, group_id):
         profile = line_bot_api.get_profile(user_id)
         # print(f"Display name: {profile.display_name}, User ID: {profile.user_id}")
 
-    except Exception as e:
+    except Exception:
         # print(f"get_profile error: {e}")
         # 改抓群組成員資料
         profile = line_bot_api.get_group_member_profile(group_id, user_id)
@@ -192,7 +201,8 @@ def create_or_update_group_data(group_id, user_id):
 
 
 def update_count(user_id, group_id, num):
-    _today = datetime.today().strftime("%Y-%m-%d")
+    # _today = datetime.today().strftime("%Y-%m-%d")
+    _today = datetime.now(timezone).strftime("%Y-%m-%d")
     doc_id = f"{_today}-{group_id}"
     data = fetch_data("count", doc_id)
     user_name = get_user_profile(user_id, group_id).display_name
@@ -209,7 +219,8 @@ def update_count(user_id, group_id, num):
 
 
 def update_finish(user_id, group_id, num):
-    _today = datetime.today().strftime("%Y-%m-%d")
+    # _today = datetime.today().strftime("%Y-%m-%d")
+    _today = datetime.now(timezone).strftime("%Y-%m-%d")
     doc_id = f"{_today}-{group_id}"
     data = fetch_data("count", doc_id)
     user_name = get_user_profile(user_id, group_id).display_name
@@ -227,7 +238,8 @@ def update_finish(user_id, group_id, num):
 
 def update_all_counts(group_id, num):
     print(f"log: update_all_counts function")
-    _today = datetime.today().strftime("%Y-%m-%d")
+    # _today = datetime.today().strftime("%Y-%m-%d")
+    _today = datetime.now(timezone).strftime("%Y-%m-%d")
     doc_id = f"{_today}-{group_id}"
     data = fetch_data("count", doc_id)
 
@@ -262,7 +274,8 @@ def get_today_count(group_id):
     return dict
     ex: {'user1': {'count': 10, 'finish': 2}, 'user2': {'count': 5, 'finish': 1}}
     """
-    _today = datetime.today().strftime("%Y-%m-%d")
+    # _today = datetime.today().strftime("%Y-%m-%d")
+    _today = datetime.now(timezone).strftime("%Y-%m-%d")
     doc_id = f"{_today}-{group_id}"
     data = fetch_data("count", doc_id)
 
