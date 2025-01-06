@@ -73,7 +73,6 @@ def msg_processing(body):
                 f"已加入群組,\n members:\n {get_all_group_members(group_id)}",
             )
 
-        _today = datetime.now(timezone).strftime("%Y-%m-%d")
         # 如果有 @mention
         if is_mention:
             mentionees = get_mentionees(is_mention)
@@ -97,7 +96,7 @@ def msg_processing(body):
                     else:
                         return (
                             reply_token,
-                            f"今日統計({_today}):\n {get_today_count(group_id)}",
+                            f"{get_today_count(group_id)}",
                         )
                 elif mentionee["isSelf"]:
                     # 對機器人@
@@ -105,11 +104,11 @@ def msg_processing(body):
 
         # 如果startwith是今天
         if msg.startswith(tuple(today_type)):
-            data = get_today_count(group_id)
-            return reply_token, f"今日統計({_today}):\n {data}"
+            return reply_token, f"{get_today_count(group_id)}"
+
         if msg.startswith(tuple(total_type)):
             data = get_total_count(group_id)
-            return reply_token, f"總計:\n {data}"
+            return reply_token, f"{data}"
 
         # 去除空白
         msg = msg.strip()
@@ -122,7 +121,7 @@ def msg_processing(body):
             num = int(msg[1:])
             update_finish(user_id, group_id, num)
 
-        return reply_token, f"今日統計({_today}):\n {get_today_count(group_id)}"
+        return reply_token, f"{get_today_count(group_id)}"
     except InvalidSignatureError:
         return None
 
@@ -308,19 +307,22 @@ def get_today_count(group_id):
     data = fetch_data("group", f"{group_id}")
 
     if doc_id in data:
-        result = ""
+        result = f"今日統計({_today}):\n"
+        result += "使用者名稱       總計數       完成數\n"
+        result += "-----------------------------------\n"
         for user, info in data[doc_id].items():
-            result += f"{user}: {info}\n"
+            result += f"{user:.<14}{info['count']:.^10}{info['finish']:.>10}\n"
         return result
     else:
-        return "今日尚無任何紀錄"
+        return f"今日統計({_today}):\n 今日尚無任何紀錄"
 
 
 def get_total_count(group_id):
     group_db = FirestoreDB(f"group/{group_id}/groupmember")
     data = group_db.read_collection()
 
-    result = ""
+    result += "使用者名稱       總計數       完成數\n"
+    result += "-----------------------------------\n"
     for userid, info in data.items():
-        result += f"{userid}: {info}\n"
+        result += f"{info['name']:.<14}{info['total_counts']:.^10}{info['finish_counts']:.>10}\n"
     return result
