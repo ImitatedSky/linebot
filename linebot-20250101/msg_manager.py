@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 from datetime import datetime
@@ -7,6 +8,7 @@ from firebase_manager import FirestoreDB
 
 from linebot import LineBotApi
 from linebot.exceptions import InvalidSignatureError
+from linebot.models import FlexSendMessage
 
 timezone = pytz.timezone("Asia/Taipei")
 # 使用 main.py 中的 line_bot_api 和 handler
@@ -327,3 +329,32 @@ def get_total_count(group_id):
     for userid, info in data.items():
         result += f"{info['name']:.<14}{info['total_counts']:.^10}{info['finish_counts']:.>10}\n"
     return result
+
+
+def test_flex_message(group_id, _day):
+    group_db = FirestoreDB(f"group/{group_id}/groupmember")
+    data = group_db.read_collection()
+
+    # 只讀取一次模板文件
+    with open("flex_msg_template.json", encoding="utf-8") as f:
+        flex_body = json.load(f)
+    with open("count_template.json", encoding="utf-8") as f:
+        json_data_template = json.load(f)
+
+    # _day = datetime.now().strftime("%Y-%m-%d")
+    flex_body["body"]["contents"][0]["text"] = "總計"
+    flex_body["body"]["contents"][1]["text"] = "2025-01-01 ~ now"
+
+    for user_id, info in data.items():
+        # 每次迭代時創建新的副本
+        json_data = copy.deepcopy(json_data_template)
+        json_data["contents"][0]["text"] = info["name"]
+        json_data["contents"][1]["contents"][1]["text"] = str(
+            info["total_counts"]
+        )
+        json_data["contents"][2]["contents"][1]["text"] = str(
+            info["finish_counts"]
+        )
+        flex_body["body"]["contents"].append(json_data)
+
+    return FlexSendMessage(alt_text="總計統計", contents=flex_body)
