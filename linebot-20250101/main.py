@@ -7,7 +7,7 @@ from msg_manager import msg_processing
 
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import TextSendMessage
+from linebot.models import FlexSendMessage, TextSendMessage
 
 # 初始化 Line Bot API 和 Webhook Handler
 line_bot_api = LineBotApi(os.environ.get("CHANNEL_ACCESS_TOKEN"))
@@ -45,10 +45,13 @@ def linebot(request):
                     if result:
                         reply_token, msg = result
 
-                        # 發送回應訊息
-                        line_bot_api.reply_message(
-                            reply_token, TextSendMessage(text=msg)
-                        )
+                        if type(msg) == str:
+                            # 發送回應訊息
+                            line_bot_api.reply_message(
+                                reply_token, TextSendMessage(text=msg)
+                            )
+                        elif type(msg) == FlexSendMessage:
+                            line_bot_api.reply_message(reply_token, msg)
 
                     return "OK", 200
                 except InvalidSignatureError as e:

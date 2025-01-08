@@ -98,7 +98,7 @@ def msg_processing(body):
                     else:
                         return (
                             reply_token,
-                            f"{get_today_count(group_id)}",
+                            get_today_count(group_id),
                         )
                 elif mentionee["isSelf"]:
                     # 對機器人@
@@ -106,11 +106,10 @@ def msg_processing(body):
 
         # 如果startwith是今天
         if msg.startswith(tuple(today_type)):
-            return reply_token, f"{get_today_count(group_id)}"
+            return reply_token, get_today_count(group_id)
 
         if msg.startswith(tuple(total_type)):
-            data = get_total_count(group_id)
-            return reply_token, f"{data}"
+            return reply_token, get_total_count(group_id)
 
         # 去除空白
         msg = msg.strip()
@@ -123,7 +122,7 @@ def msg_processing(body):
             num = int(msg[1:])
             update_finish(user_id, group_id, num)
 
-        return reply_token, f"{get_today_count(group_id)}"
+        return reply_token, get_today_count(group_id)
     except InvalidSignatureError:
         return None
 
@@ -308,30 +307,33 @@ def get_today_count(group_id):
     doc_id = f"{_today}"
     data = fetch_data("group", f"{group_id}")
 
+    # 只讀取一次模板文件
+    with open("flex_msg_template.json", encoding="utf-8") as f:
+        flex_body = json.load(f)
+    with open("count_template.json", encoding="utf-8") as f:
+        json_data_template = json.load(f)
+
+    flex_body["body"]["contents"][0]["text"] = "今日"
+    flex_body["body"]["contents"][1]["text"] = _today
+
     if doc_id in data:
-        result = f"今日統計({_today}):\n"
-        result += "使用者名稱       總計數       完成數\n"
-        result += "-----------------------------------\n"
         for user, info in data[doc_id].items():
-            result += f"{user:.<14}{info['count']:.^10}{info['finish']:.>10}\n"
-        return result
+            # 每次迭代時創建新的副本
+            json_data = copy.deepcopy(json_data_template)
+            json_data["contents"][0]["text"] = user
+            json_data["contents"][1]["contents"][1]["text"] = str(
+                info["count"]
+            )
+            json_data["contents"][2]["contents"][1]["text"] = str(
+                info["finish"]
+            )
+            flex_body["body"]["contents"].append(json_data)
+        return FlexSendMessage(alt_text="今日統計", contents=flex_body)
     else:
         return f"今日統計({_today}):\n 今日尚無任何紀錄"
 
 
 def get_total_count(group_id):
-    group_db = FirestoreDB(f"group/{group_id}/groupmember")
-    data = group_db.read_collection()
-
-    result = "總計統計:\n"
-    result += "使用者名稱       總計數       完成數\n"
-    result += "-----------------------------------\n"
-    for userid, info in data.items():
-        result += f"{info['name']:.<14}{info['total_counts']:.^10}{info['finish_counts']:.>10}\n"
-    return result
-
-
-def test_flex_message(group_id, _day):
     group_db = FirestoreDB(f"group/{group_id}/groupmember")
     data = group_db.read_collection()
 
